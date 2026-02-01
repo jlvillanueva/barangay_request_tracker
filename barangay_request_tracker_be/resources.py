@@ -5,6 +5,7 @@ import logging
 
 from datetime import datetime
 
+from modules.oauth2 import generate_token
 from modules.utilities import VerifyPayload
 from flask_restful import Resource
 from flask import json, request
@@ -46,34 +47,13 @@ def verify_payload():
         return wrapper
     return decorator
 
-class OAuth2(Resource):
-    @verify_payload()
-    def post(self):
-        return {
-            'rc': 200,
-            'status': 'OAuth2 Endpoint - Placeholder'
-        }
-
 class MobileLogin(Resource):
     @verify_payload()
     def post(self):
-        data = request.get_json()
-        logger.warning(f"User attempting login: {data.get('data').get('username')}")
 
-        user = Users.query.filter_by(username=data.get('data').get('username')).first()
+        result = generate_token();
 
-        password = data.get('data').get('password')
-
-        if user and VerifyPhrase(password, user.password_salt, user.password_key):
-            return {
-                'rc': 201,
-                'status': 'Login Successfully',
-            }
-        else:
-            return {
-                'rc': 401,
-                'status': 'Invalid credentials',
-            }
+        return result
 
 class MobileRegistration(Resource):
     def post(self):

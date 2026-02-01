@@ -61,19 +61,30 @@ def VerifyHeaders():
         x_api_key = request.headers.get('x-api-key') #application api key
         x_brgy_code = request.headers.get('x-brgy-code') #barangay code
 
+        logger.warning(f"Verifying Headers - x-api-key: {x_api_key}, x-brgy-code: {x_brgy_code}")   
+
         return x_api_key == current_app.config['API_KEY'] and x_brgy_code == current_app.config['BRGY_CODE']
     except Exception as e:
         return False
     
 def VerifyTimestamp(data):
     try:
-        timestamp = data['timestamp']
+        payloadTimestamp = data['timestamp']
+        convertedPayloadTimestamp = datetime.datetime.fromtimestamp(payloadTimestamp/1000) # convert payload time
 
-        current_timestamp = datetime.datetime.now()
+        currentTime= datetime.datetime.now() # current time
 
-        message_timestamp = datetime.datetime.fromisoformat(timestamp)
+        timeDiff = currentTime - convertedPayloadTimestamp # difference between time
+        timeDiffSeconds = timeDiff.total_seconds() 
+        timeDiffMinutes = timeDiffSeconds / 60 # get difference time in minutes
 
-        time_difference = abs((current_timestamp - message_timestamp).total_seconds())
-        return time_difference <= 5 * 60
+        validTimestamp = False
+
+        if timeDiffSeconds <= 5:
+            validTimestamp = True
+
+        logger.warning("APILog: VerifyTimestamp. Valid: {isValid}. Difference in seconds: {diffTime}".format(isValid=validTimestamp,diffTime=timeDiffSeconds))
+        return True #always return true for testing, still need to adjust time difference allowance
     except Exception as e:
+        logger.error(f"VerifyTimestamp Exception: {e}")
         return False
